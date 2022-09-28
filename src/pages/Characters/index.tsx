@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { FiChevronDown } from 'react-icons/fi';
 import api from "../../services/api";
-import {Container} from './styles';
+import {Container, CardList, Card, ButtonMore} from './styles';
 
 interface ResponseData {
   id: string
@@ -15,30 +16,54 @@ interface ResponseData {
 const Characters: React.FC = () => {
   const [characters, setCharacters] = useState<ResponseData[]>([])
 
-  // Requisicao da API
+  // Carregando requisicao da API
   useEffect(() => {
     api
     .get('/characters')
     .then(response => {
       setCharacters(response.data.data.results)
     })
-    .catch(err => console.log(err))
+    .catch(err => console.log('Log Erro', err))
+  }, []);
+
+  // Carregando mais personagens
+
+  const handleMore = useCallback(async() => {
+    try{
+      const offset = characters.length
+      const response = await api.get('characters', {
+        params: {
+          offset,
+        },
+      });
+
+      setCharacters([... characters, ... response.data.data.results]);
+    }catch(err) {
+      console.log(err);
+    }
   }, []);
   
   return (
   <Container>
-    <h1>Characters</h1>
-    <ul>
+
+    <CardList>
       {characters.map(character => {
-        return (
-          <li key = {character.id}>
-          <img src={`${character.thumbnail.path}.${character.thumbnail.extension}`} alt= {`Foto do ${character.name}`} />
-            <span className="name">{character.name}</span>
-            <span className="name">{character.description}</span>
-          </li>
+        return(
+          <Card key={character.id} thumbnail={character.thumbnail}>
+            <div id="img" />
+            <h2>{character.name}</h2>
+            <p>{character.description}</p>
+          </Card>
         )
       })}
-    </ul>
+    </CardList>
+
+    <ButtonMore onClick={handleMore}>
+      <FiChevronDown size = {20}/>
+      Mais
+      <FiChevronDown size = {20} />
+    </ButtonMore>
+
   </Container>)
 };
 
